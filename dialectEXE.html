@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>肥後っ子AI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {
+  font-family: sans-serif;
+  background: #e0f2f1;
+  text-align: center;
+  padding: 20px;
+}
+#message {
+  min-height: 3em;
+  margin: 20px;
+  padding: 15px;
+  background: #fff;
+  border-radius: 10px;
+}
+button {
+  font-size: 1.2em;
+  padding: 15px 30px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>肥後っ子 AI</h1>
+<div id="message">ボタンば押して話し掛けてはいよ！</div>
+<button onclick="startTalk()">?? 話す</button>
+
+<script>
+const msg = document.getElementById("message");
+
+async function startTalk() {
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!Recognition) {
+    msg.textContent = "Chromeで開いてはいよ！";
+    return;
+  }
+
+  const rec = new Recognition();
+  rec.lang = "ja-JP";
+
+  rec.onstart = () => {
+    msg.textContent = "聞きよるバイ...";
+  };
+
+  rec.onresult = async (e) => {
+    const text = e.results[0][0].transcript;
+
+    msg.textContent = "「" + text + "」考え中バイ...";
+
+    const res = await fetch("https://YOUR-VERCEL-URL/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ message: text })
+    });
+
+    const data = await res.json();
+    msg.textContent = data.reply;
+
+    speak(data.reply);
+  };
+
+  rec.onerror = () => {
+    msg.textContent = "エラーばい。もう一回押してはいよ。";
+  };
+
+  rec.start();
+}
+
+function speak(text) {
+  const uttr = new SpeechSynthesisUtterance(text);
+  uttr.lang = "ja-JP";
+  speechSynthesis.speak(uttr);
+}
+</script>
+
+</body>
+</html>
