@@ -17,39 +17,30 @@
   <h1>肥後っ子 AI</h1>
   <img id="aiImage" src="https://lh3.googleusercontent.com/d/15xWlq7nL6FmJDuSeeVYQr4Bqe5xqnNwq">
   <div id="message">ボタンば押して話し掛けてはいよ！</div>
-  <button id="talkBtn" onclick="handleTalk()">??? お話しする</button>
-
+  <button id="talkBtn" onclick="handleTalk()">🎤 お話しする</button>
   <script>
-    // ★重要：GASで「ウェブアプリとしてデプロイ」して発行されたURLをここに貼り付けてください
-    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzg2VB7-o4XuFJsypghXVrknNOp-f3QpdTmFE7bYs6o4fgcJDS6G5oGBoFtfFv0PSZX/exec"; 
-
+    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwCLtfOU0ogrVTPbzOyQ4h9hV9gwWYRznZcZIpFgngjc764vRM8DHYmMbzeXat6akUo/exec";
     const talkBtn = document.getElementById("talkBtn");
     const messageDiv = document.getElementById("message");
     const aiImage = document.getElementById("aiImage");
     const imgStill = "https://lh3.googleusercontent.com/d/15xWlq7nL6FmJDuSeeVYQr4Bqe5xqnNwq";
     const imgTalk = "https://lh3.googleusercontent.com/d/131KY3qih_L2SCT7U-O5uw6o3-JJbau18";
-
     async function handleTalk() {
       talkBtn.disabled = true;
       messageDiv.textContent = "マイクば準備しよるバイ...";
-
       const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!Recognition) {
         messageDiv.textContent = "あたのブラウザは音声認識に対応しとらんごたっバイ。Chromeを使ってはいよ！";
         talkBtn.disabled = false;
         return;
       }
-
       const rec = new Recognition();
       rec.lang = "ja-JP";
-
-      rec.onstart = () => { messageDiv.textContent = "?? 聞きよるバイ！お話ししてはいよ。"; };
-
+      rec.onstart = () => { messageDiv.textContent = "🎤 聞きよるバイ！お話ししてはいよ。"; };
       rec.onresult = (e) => {
         const text = e.results[0][0].transcript;
         sendToGemini(text);
       };
-
       rec.onerror = (e) => {
         if (e.error === 'not-allowed') {
           messageDiv.innerHTML = "マイクのアクセスが拒否されたバイ。<br>ブラウザのURLバーの左側からマイクを許可してはいよ。";
@@ -58,19 +49,16 @@
         }
         talkBtn.disabled = false;
       };
-
-      rec.onend = () => { if (!messageDiv.textContent.includes("考え中")) talkBtn.disabled = false; };
-
+      rec.onend = () => {
+        if (!messageDiv.textContent.includes("考え中")) talkBtn.disabled = false;
+      };
       try { rec.start(); } catch (err) { talkBtn.disabled = false; }
     }
-
     function sendToGemini(text) {
-      messageDiv.textContent = "?? 「" + text + "」か... 考え中バイ...";
-      
-      // google.script.run の代わりに fetch APIを使ってGASへ送信します
+      messageDiv.textContent = "🤔 「" + text + "」か... 考え中バイ...";
       fetch(GAS_WEBAPP_URL, {
         method: "POST",
-        headers: { "Content-Type": "text/plain" }, // CORSエラー回避のおまじない
+        headers: { "Content-Type": "text/plain" },
         body: JSON.stringify({ message: text })
       })
       .then(response => response.json())
@@ -83,7 +71,6 @@
         talkBtn.disabled = false;
       });
     }
-
     function speak(text) {
       window.speechSynthesis.cancel();
       const uttr = new SpeechSynthesisUtterance(text);
