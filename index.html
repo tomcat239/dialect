@@ -1,97 +1,264 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>熊本弁AI 肥後っ子</title>
   <style>
-    body { font-family: sans-serif; background: #e0f2f1; text-align: center; padding: 20px; }
-    #aiImage { width: 200px; border-radius: 20px; border: 4px solid #fff; transition: 0.3s; }
-    #message { min-height: 3em; margin: 20px; padding: 15px; background: #fff; border-radius: 10px; border: 2px solid #c62828; font-weight: bold; }
-    button { font-size: 1.2em; padding: 15px 30px; border-radius: 30px; background: #c62828; color: white; border: none; cursor: pointer; box-shadow: 0 4px 0 #8e0000; }
-    button:active { transform: translateY(2px); box-shadow: none; }
-    button:disabled { background: #ccc; box-shadow: none; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+      background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+    }
+
+    h1 {
+      font-size: 2em;
+      color: #c62828;
+      text-shadow: 1px 1px 0 #fff;
+      margin-bottom: 24px;
+      letter-spacing: 2px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.85);
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      padding: 32px 28px;
+      max-width: 420px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    #aiImage {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      border: 5px solid #c62828;
+      object-fit: cover;
+      box-shadow: 0 4px 16px rgba(198,40,40,0.25);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    #aiImage.talking {
+      transform: scale(1.06);
+      box-shadow: 0 8px 32px rgba(198,40,40,0.45);
+      animation: pulse 0.6s infinite alternate;
+    }
+    @keyframes pulse {
+      from { border-color: #c62828; }
+      to   { border-color: #ff8f00; }
+    }
+
+    #message {
+      min-height: 80px;
+      width: 100%;
+      padding: 16px;
+      background: #fff;
+      border-radius: 14px;
+      border: 2px solid #c62828;
+      font-size: 1.05em;
+      font-weight: bold;
+      color: #333;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    #statusBar {
+      font-size: 0.85em;
+      color: #888;
+      height: 1.4em;
+    }
+
+    #talkBtn {
+      font-size: 1.2em;
+      padding: 16px 40px;
+      border-radius: 50px;
+      background: linear-gradient(135deg, #c62828, #e53935);
+      color: white;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #8e0000, 0 8px 16px rgba(198,40,40,0.3);
+      transition: transform 0.1s, box-shadow 0.1s;
+      letter-spacing: 1px;
+    }
+    #talkBtn:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #8e0000;
+    }
+    #talkBtn:disabled {
+      background: linear-gradient(135deg, #bbb, #ccc);
+      box-shadow: 0 4px 0 #999;
+      cursor: not-allowed;
+    }
+
+    .mic-wave {
+      display: none;
+      gap: 4px;
+      align-items: flex-end;
+      height: 30px;
+    }
+    .mic-wave.active { display: flex; }
+    .mic-wave span {
+      width: 6px;
+      border-radius: 3px;
+      background: #c62828;
+      animation: wave 0.8s infinite ease-in-out;
+    }
+    .mic-wave span:nth-child(1) { height: 10px; animation-delay: 0s; }
+    .mic-wave span:nth-child(2) { height: 20px; animation-delay: 0.1s; }
+    .mic-wave span:nth-child(3) { height: 28px; animation-delay: 0.2s; }
+    .mic-wave span:nth-child(4) { height: 20px; animation-delay: 0.3s; }
+    .mic-wave span:nth-child(5) { height: 10px; animation-delay: 0.4s; }
+    @keyframes wave {
+      0%, 100% { transform: scaleY(0.5); opacity: 0.6; }
+      50%       { transform: scaleY(1.2); opacity: 1; }
+    }
   </style>
 </head>
 <body>
-  <h1>肥後っ子 AI</h1>
-  <img id="aiImage" src="https://lh3.googleusercontent.com/d/15xWlq7nL6FmJDuSeeVYQr4Bqe5xqnNwq">
-  <div id="message">ボタンば押して話し掛けてはいよ！</div>
-  <button id="talkBtn" onclick="handleTalk()">??? お話しする</button>
 
-  <script>
-    // ★重要：GASで「ウェブアプリとしてデプロイ」して発行されたURLをここに貼り付けてください
-    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwCLtfOU0ogrVTPbzOyQ4h9hV9gwWYRznZcZIpFgngjc764vRM8DHYmMbzeXat6akUo/exec"; 
+  <h1>$D83C$DF4A 肥後っ子 AI</h1>
 
-    const talkBtn = document.getElementById("talkBtn");
-    const messageDiv = document.getElementById("message");
-    const aiImage = document.getElementById("aiImage");
-    const imgStill = "https://lh3.googleusercontent.com/d/15xWlq7nL6FmJDuSeeVYQr4Bqe5xqnNwq";
-    const imgTalk = "https://lh3.googleusercontent.com/d/131KY3qih_L2SCT7U-O5uw6o3-JJbau18";
+  <div class="card">
+    <img id="aiImage"
+      src="https://lh3.googleusercontent.com/d/15xWlq7nL6FmJDuSeeVYQr4Bqe5xqnNwq"
+      alt="肥後っ子">
 
-    async function handleTalk() {
-      talkBtn.disabled = true;
-      messageDiv.textContent = "マイクば準備しよるバイ...";
+    <div id="message">ボタンば押して話し掛けてはいよ！</div>
 
-      const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!Recognition) {
-        messageDiv.textContent = "あたのブラウザは音声認識に対応しとらんごたっバイ。Chromeを使ってはいよ！";
-        talkBtn.disabled = false;
-        return;
+    <div class="mic-wave" id="micWave">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div id="statusBar"></div>
+
+    <button id="talkBtn" onclick="handleTalk()">$D83C$DFA4 お話しする</button>
+  </div>
+
+<script>
+  const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwCLtfOU0ogrVTPbzOyQ4h9hV9gwWYRznZcZIpFgngjc764vRM8DHYmMbzeXat6akUo/exec";
+
+  const talkBtn   = document.getElementById("talkBtn");
+  const messageDiv= document.getElementById("message");
+  const aiImage   = document.getElementById("aiImage");
+  const micWave   = document.getElementById("micWave");
+  const statusBar = document.getElementById("statusBar");
+
+  const imgStill = "https://lh3.googleusercontent.com/d/15xWlq7nL6FmJDuSeeVYQr4Bqe5xqnNwq";
+  const imgTalk  = "https://lh3.googleusercontent.com/d/131KY3qih_L2SCT7U-O5uw6o3-JJbau18";
+
+  function setStatus(msg) { statusBar.textContent = msg; }
+  function setMessage(msg) { messageDiv.textContent = msg; }
+  function setTalking(on) {
+    aiImage.classList.toggle("talking", on);
+    aiImage.src = on ? imgTalk : imgStill;
+  }
+  function setListening(on) {
+    micWave.classList.toggle("active", on);
+  }
+
+  async function handleTalk() {
+    talkBtn.disabled = true;
+    setMessage("マイクば準備しよるバイ...");
+    setStatus("");
+
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition) {
+      setMessage("このブラウザは音声認識に対応しとらんごたっバイ。Chromeを使ってはいよ！");
+      talkBtn.disabled = false;
+      return;
+    }
+
+    const rec = new Recognition();
+    rec.lang = "ja-JP";
+    rec.interimResults = false;
+
+    rec.onstart = () => {
+      setMessage("$D83C$DFA4 聞きよるバイ！話しかけてはいよ。");
+      setListening(true);
+      setStatus("音声認識中...");
+    };
+
+    rec.onresult = (e) => {
+      const text = e.results[0][0].transcript;
+      setListening(false);
+      sendToGemini(text);
+    };
+
+    rec.onerror = (e) => {
+      setListening(false);
+      if (e.error === 'not-allowed') {
+        setMessage("マイクのアクセスが拒否されたバイ。\nブラウザのURLバーの左側からマイクを許可してはいよ。");
+      } else if (e.error === 'no-speech') {
+        setMessage("声が聞こえんかったバイ。もう一回ボタンば押してはいよ！");
+      } else {
+        setMessage("エラーが起きたバイ（" + e.error + "）。");
       }
+      setStatus("");
+      talkBtn.disabled = false;
+    };
 
-      const rec = new Recognition();
-      rec.lang = "ja-JP";
-
-      rec.onstart = () => { messageDiv.textContent = "?? 聞きよるバイ！お話ししてはいよ。"; };
-
-      rec.onresult = (e) => {
-        const text = e.results[0][0].transcript;
-        sendToGemini(text);
-      };
-
-      rec.onerror = (e) => {
-        if (e.error === 'not-allowed') {
-          messageDiv.innerHTML = "マイクのアクセスが拒否されたバイ。<br>ブラウザのURLバーの左側からマイクを許可してはいよ。";
-        } else {
-          messageDiv.textContent = "エラーが起きたバイ（" + e.error + "）。";
-        }
+    rec.onend = () => {
+      setListening(false);
+      if (!messageDiv.textContent.includes("考え中")) {
+        setStatus("");
         talkBtn.disabled = false;
-      };
+      }
+    };
 
-      rec.onend = () => { if (!messageDiv.textContent.includes("考え中")) talkBtn.disabled = false; };
-
-      try { rec.start(); } catch (err) { talkBtn.disabled = false; }
+    try {
+      rec.start();
+    } catch (err) {
+      setMessage("マイクの起動に失敗したバイ。");
+      talkBtn.disabled = false;
     }
+  }
 
-    function sendToGemini(text) {
-      messageDiv.textContent = "?? 「" + text + "」か... 考え中バイ...";
-      
-      // google.script.run の代わりに fetch APIを使ってGASへ送信します
-      fetch(GAS_WEBAPP_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" }, // CORSエラー回避のおまじない
-        body: JSON.stringify({ message: text })
-      })
-      .then(response => response.json())
-      .then(data => {
-        messageDiv.textContent = data.reply;
-        speak(data.reply);
-      })
-      .catch(error => {
-        messageDiv.textContent = "通信に失敗したバイ。";
-        talkBtn.disabled = false;
-      });
-    }
+  function sendToGemini(text) {
+    setMessage("$D83E$DD14 「" + text + "」か...\n考え中バイ...");
+    setStatus("GASへ送信中...");
 
-    function speak(text) {
-      window.speechSynthesis.cancel();
-      const uttr = new SpeechSynthesisUtterance(text);
-      uttr.lang = "ja-JP";
-      uttr.onstart = () => { aiImage.src = imgTalk; };
-      uttr.onend = () => { aiImage.src = imgStill; talkBtn.disabled = false; };
-      window.speechSynthesis.speak(uttr);
-    }
-  </script>
+    fetch(GAS_WEBAPP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ message: text })
+    })
+    .then(res => {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    })
+    .then(data => {
+      setStatus("");
+      setMessage(data.reply);
+      speak(data.reply);
+    })
+    .catch(err => {
+      setStatus("通信エラー: " + err.message);
+      setMessage("通信に失敗したバイ。GASのデプロイURLば確認してはいよ。");
+      talkBtn.disabled = false;
+    });
+  }
+
+  function speak(text) {
+    window.speechSynthesis.cancel();
+    const uttr = new SpeechSynthesisUtterance(text);
+    uttr.lang = "ja-JP";
+    uttr.rate = 0.95;
+    uttr.pitch = 1.1;
+    uttr.onstart = () => { setTalking(true); setStatus("しゃべりよるバイ..."); };
+    uttr.onend   = () => { setTalking(false); setStatus(""); talkBtn.disabled = false; };
+    uttr.onerror = () => { setTalking(false); setStatus(""); talkBtn.disabled = false; };
+    window.speechSynthesis.speak(uttr);
+  }
+</script>
 </body>
 </html>
+
